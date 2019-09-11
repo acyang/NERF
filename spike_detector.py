@@ -146,4 +146,4 @@ plt.scatter(one_sigma, data[one_sigma], c='c', alpha=0.2)
 plt.scatter(two_sigma, data[two_sigma], c='g', alpha=0.4) 
 plt.scatter(thr_sigma, data[thr_sigma], c='m', alpha=0.8)   
 
-print(len(one_sigma),len(two_sigma),len(thr_sigma))
+#print(len(one_sigma),len(two_sigma),len(thr_sigma))

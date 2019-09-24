@@ -99,7 +99,7 @@ def find_by_deviration(input, dist):
 
     return output
 
-def crop_data(input, idx, time_window):
+def crop_data_0(input, idx, time_window):
     ubound=len(input)
     start=idx-time_window//2
     end=idx+time_window//2
@@ -114,6 +114,17 @@ def crop_data(input, idx, time_window):
         output=np.pad(output, (0, pad), "constant")
     else:
         output=input[start:end+1]
+    
+    return output
+
+def crop_data(input, idx, time_window):
+    padding=time_window//2
+    input_padded=np.pad(input, (padding, padding), "constant")
+    
+    start=idx
+    end=idx+time_window
+    
+    output=input_padded[start:end+1]
     
     return output
 
@@ -173,67 +184,69 @@ thr_sigma=find_by_deviration(data, 7.0)
 
 #print(len(one_sigma),len(two_sigma),len(thr_sigma))
 
-#print(crop_data(data, 0, 10))
-#print(crop_data(data, 1, 10))
-#print(crop_data(data, 35568715, 10))
-#print(crop_data(data, 35568716, 10))
+print(crop_data(data, 0, 10))
+print(crop_data(data, 1, 10))
+print(data[:10])
+print(crop_data(data, 35568715, 10))
+print(crop_data(data, 35568716, 10))
+print(data[-10:])
 
-with h5py.File("output/7_sigma.h5", "w") as f:
-    d = f.create_dataset("index", data=thr_sigma)
-    d.attrs["Spikes_Number"] = len(thr_sigma)
-    d.attrs["Data_Type"] = "int"
-    d.attrs["Index_Type"] = "center"
-    #print(d.shape, d.dtype)
-    
-    sd = f.create_dataset("Spike_Data", shape=(len(thr_sigma), 11))
-    sd.attrs["Data_Type"] = "int"
-    sd.attrs["Time_window"] = 10
-    j=0
-    for i in thr_sigma:
-        dcrop=crop_data(data, i, 10)
-        #print(i)
-        #print(dcrop)
-        
-        sd[j,:]=dcrop
-        #print(j, sd[j,:])
-        j+=1
-        
-with h5py.File("output/5_sigma.h5", "w") as f:
-    d = f.create_dataset("index", data=two_sigma)
-    d.attrs["Spikes_Number"] = len(two_sigma)
-    d.attrs["Data_Type"] = "int"
-    d.attrs["Index_Type"] = "center"
-    #print(d.shape, d.dtype)
-    
-    sd = f.create_dataset("Spike_Data", shape=(len(two_sigma), 11))
-    sd.attrs["Data_Type"] = "int"
-    sd.attrs["Time_window"] = 10
-    j=0
-    for i in two_sigma:
-        dcrop=crop_data(data, i, 10)
-        #print(i)
-        #print(dcrop)
-        
-        sd[j,:]=dcrop
-        #print(j, sd[j,:])
-        j+=1
-        
-with h5py.File("output/3_sigma.h5", "w") as f:
-    d = f.create_dataset("index", data=one_sigma)
-    d.attrs["Spikes_Number"] = len(one_sigma)
-    d.attrs["Data_Type"] = "int"
-    d.attrs["Index_Type"] = "center"
-    #print(d.shape, d.dtype)
-    
-    sd = f.create_dataset("Spike_Data", shape=(len(one_sigma), 11))
-    sd.attrs["Data_Type"] = "int"
-    sd.attrs["Time_window"] = 10
-    j=0
-    for i in one_sigma:
-        dcrop=crop_data(data, i, 10)
-        #print(i)
-        #print(dcrop)
-        
-        sd[j,:]=dcrop
-        #print(j, sd[j,:])
-        j+=1
+#with h5py.File("output/7_sigma.h5", "w") as f:
+#    d = f.create_dataset("index", data=thr_sigma)
+#    d.attrs["Spikes_Number"] = len(thr_sigma)
+#    d.attrs["Data_Type"] = "int"
+#    d.attrs["Index_Type"] = "center"
+#    #print(d.shape, d.dtype)
+#    
+#    sd = f.create_dataset("Spike_Data", shape=(len(thr_sigma), 11))
+#    sd.attrs["Data_Type"] = "int"
+#    sd.attrs["Time_window"] = 10
+#    j=0
+#    for i in thr_sigma:
+#        dcrop=crop_data(data, i, 10)
+#        #print(i)
+#        #print(dcrop)
+#        
+#        sd[j,:]=dcrop
+#        #print(j, sd[j,:])
+#        j+=1
+#        
+#with h5py.File("output/5_sigma.h5", "w") as f:
+#    d = f.create_dataset("index", data=two_sigma)
+#    d.attrs["Spikes_Number"] = len(two_sigma)
+#    d.attrs["Data_Type"] = "int"
+#    d.attrs["Index_Type"] = "center"
+#    #print(d.shape, d.dtype)
+#    
+#    sd = f.create_dataset("Spike_Data", shape=(len(two_sigma), 11))
+#    sd.attrs["Data_Type"] = "int"
+#    sd.attrs["Time_window"] = 10
+#    j=0
+#    for i in two_sigma:
+#        dcrop=crop_data(data, i, 10)
+#        #print(i)
+#        #print(dcrop)
+#        
+#        sd[j,:]=dcrop
+#        #print(j, sd[j,:])
+#        j+=1
+#        
+#with h5py.File("output/3_sigma.h5", "w") as f:
+#    d = f.create_dataset("index", data=one_sigma)
+#    d.attrs["Spikes_Number"] = len(one_sigma)
+#    d.attrs["Data_Type"] = "int"
+#    d.attrs["Index_Type"] = "center"
+#    #print(d.shape, d.dtype)
+#    
+#    sd = f.create_dataset("Spike_Data", shape=(len(one_sigma), 11))
+#    sd.attrs["Data_Type"] = "int"
+#    sd.attrs["Time_window"] = 10
+#    j=0
+#    for i in one_sigma:
+#        dcrop=crop_data(data, i, 10)
+#        #print(i)
+#        #print(dcrop)
+#        
+#        sd[j,:]=dcrop
+#        #print(j, sd[j,:])
+#        j+=1

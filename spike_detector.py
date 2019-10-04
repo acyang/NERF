@@ -56,10 +56,9 @@ def split_single_channel(filename, dtype, nchannels, channel):
         print("the file may be corrupted!!")
         
     nframes=file_size//stride
+    data=np.empty(nframes, np.int16)
     
     with open(filename, "rb") as f:
-        data=np.empty(nframes, np.int16)
-        
         for i in list(range(nframes)):
             offset=(channel-1)*byte_size+i*stride
             f.seek(offset, os.SEEK_SET)
@@ -78,15 +77,16 @@ def load_single_channel(filename, dtype):
         print("the file may be corrupted!!")
         
     nframes=file_size//stride
+    data=np.empty(nframes, np.int16)
     
-    with open(filename, "rb") as f:
-        data=np.empty(nframes, np.int16)
+    with open(filename, "rb") as f:    
         f.seek(0, os.SEEK_SET)
         for i in list(range(nframes)):
             data[i]=int.from_bytes(f.read(byte_size), byteorder='little', signed=True)
             
     return data
-        
+
+#Use this function if the data is too big to deal it in one shot.        
 def find_by_deviration(input, dist):
     mean = np.mean(input)
     std = np.std(input)
@@ -97,26 +97,9 @@ def find_by_deviration(input, dist):
         if np.abs(input[i]-mean) > bound :
             output.append(i)
 
-    return output
+    return np.array(output)
 
-def crop_data_0(input, idx, time_window):
-    ubound=len(input)
-    start=idx-time_window//2
-    end=idx+time_window//2
-    
-    if start < 0 :
-        output=input[:end]
-        pad=np.abs(start)
-        output=np.pad(output, (pad, 0), "constant")
-    elif end >= ubound :
-        output=input[start:]
-        pad=end-ubound+1
-        output=np.pad(output, (0, pad), "constant")
-    else:
-        output=input[start:end+1]
-    
-    return output
-
+#Use these functions if the data is too big to deal it in one shot.
 def crop_data(input, idx, time_window):
     padding=time_window//2
     input_padded=np.pad(input, (padding, padding), "constant")
@@ -128,10 +111,48 @@ def crop_data(input, idx, time_window):
     
     return output
 
-def write_to_hdf5(input, filename):    
-    with h5py.File(filename, 'w') as f:
-        f.create_dataset("index", data=input)
+def write_to_hdf5_append(input, filename):    
+    with h5py.File(filename, 'a') as f:
+#        d = f.create_dataset("index", data=input)
+#        d.attrs["Spikes_Number"] = input.shape[0]
+#        d.attrs["Data_Type"] = "int"
+#        d.attrs["Index_Type"] = "center"
+#        #print(d.shape, d.dtype)
+        
+        sd = f.create_dataset("Spike_Data", data=input)
+        sd.attrs["Spikes_Number"] = input.shape[0]
+        sd.attrs["Time_window"] = input.shape[1]
+        sd.attrs["Data_Type"] = "int"
+
+    return 0
+
+#Use these functions if you have big memory.
+def crop_all_data(data, indices, time_window):
+    padding=time_window//2
+    data_padded=np.pad(data, (padding, padding), "constant")
+
+    output=np.empty(shape=(indices.shape[0], time_window+1), dtype=np.int16)
+    j=0
+    for i in indices:
+        start=i
+        end=i+time_window
+        output[j,:]=data_padded[start:end+1]
     
+    return output
+
+def write_to_hdf5_one_time(input, filename):    
+    with h5py.File(filename, 'w') as f:
+#        d = f.create_dataset("index", data=input)
+#        d.attrs["Spikes_Number"] = input.shape[0]
+#        d.attrs["Data_Type"] = "int"
+#        d.attrs["Index_Type"] = "center"
+#        #print(d.shape, d.dtype)
+        
+        sd = f.create_dataset("Spike_Data", data=input)
+        sd.attrs["Spikes_Number"] = input.shape[0]
+        sd.attrs["Time_window"] = input.shape[1]
+        sd.attrs["Data_Type"] = "int"
+
     return 0
 
 #t = time.time()
@@ -163,6 +184,8 @@ data = load_single_channel("fake.bin", np.int64, 374, 1)
 """    
 filename="/991GB/tmp/190407_CA014/000/channel_001.bin"
 data = load_single_channel(filename, np.int16)
+mean = np.mean(data)
+std = np.std(data)
 
 df=pd.Series(data)
 avg=np.full(df.size, df.mean())
@@ -174,9 +197,28 @@ plt.plot(df.index, df, 'k')
 #plt.fill_between(df.index, avg - 5.0 * std, avg + 5.0 * std, color='r', alpha=0.4)
 #plt.fill_between(df.index, avg - 7.0 * std, avg + 7.0 * std, color='r', alpha=0.2)
 
-one_sigma=find_by_deviration(data, 3.0)
-two_sigma=find_by_deviration(data, 5.0)
-thr_sigma=find_by_deviration(data, 7.0)
+
+#t = time.time()
+bound = 7.0*std
+filters=np.abs(data-mean) > bound
+c=np.where(filters==True)[0]
+#print(c.shape, c)
+#elapsed_time=time.time()-t
+#print("elapsed time is", elapsed_time)
+
+#one_sigma=find_by_deviration(data, 3.0)
+#two_sigma=find_by_deviration(data, 5.0)
+#t = time.time()
+#thr_sigma=find_by_deviration(data, 7.0)
+#print(thr_sigma.shape, thr_sigma)
+#elapsed_time=time.time()-t
+#print("elapsed time is", elapsed_time)
+
+#t = time.time()
+#cc=crop_all_data(data, thr_sigma, 10)
+#write_to_hdf5_one_time(cc, "output/test.h5")
+#elapsed_time=time.time()-t
+#print("elapsed time is", elapsed_time)
 
 #plt.scatter(one_sigma, data[one_sigma], c='c', alpha=0.2) 
 #plt.scatter(two_sigma, data[two_sigma], c='g', alpha=0.4) 
@@ -184,32 +226,14 @@ thr_sigma=find_by_deviration(data, 7.0)
 
 #print(len(one_sigma),len(two_sigma),len(thr_sigma))
 
-print(crop_data(data, 0, 10))
-print(crop_data(data, 1, 10))
-print(data[:10])
-print(crop_data(data, 35568715, 10))
-print(crop_data(data, 35568716, 10))
-print(data[-10:])
+#print(crop_data(data, 0, 10))
+#print(crop_data(data, 1, 10))
+#print(data[:10])
+#print(crop_data(data, 35568715, 10))
+#print(crop_data(data, 35568716, 10))
+#print(data[-10:])
 
-#with h5py.File("output/7_sigma.h5", "w") as f:
-#    d = f.create_dataset("index", data=thr_sigma)
-#    d.attrs["Spikes_Number"] = len(thr_sigma)
-#    d.attrs["Data_Type"] = "int"
-#    d.attrs["Index_Type"] = "center"
-#    #print(d.shape, d.dtype)
-#    
-#    sd = f.create_dataset("Spike_Data", shape=(len(thr_sigma), 11))
-#    sd.attrs["Data_Type"] = "int"
-#    sd.attrs["Time_window"] = 10
-#    j=0
-#    for i in thr_sigma:
-#        dcrop=crop_data(data, i, 10)
-#        #print(i)
-#        #print(dcrop)
-#        
-#        sd[j,:]=dcrop
-#        #print(j, sd[j,:])
-#        j+=1
+
 #        
 #with h5py.File("output/5_sigma.h5", "w") as f:
 #    d = f.create_dataset("index", data=two_sigma)

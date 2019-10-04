@@ -29,6 +29,13 @@ def corl_dumy(s1, s2, time_window):
     pass
     return
 
+with h5py.File("output/test.h5", "r") as f:
+    print(list(f.keys()))
+
+    sd=f["Spike_Data"][:]
+    print(sd.shape)
+    print(sd)
+    
 with h5py.File("output/7_sigma.h5", "r") as f:
     print(list(f.keys()))
 
@@ -46,7 +53,7 @@ flags=np.zeros(shape=sd.shape[0], dtype=np.int)
 #print(nsingle,ntime)
 
 
-cal_corr=[corl, corl_dumy]
+#cal_corr=[corl, corl_dumy]
 
 #for i in nsingle:
 #    s1=pd.Series(sd[i,:])

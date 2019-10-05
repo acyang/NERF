@@ -39,8 +39,9 @@ with h5py.File("output/test.h5", "r") as f:
 with h5py.File("output/7_sigma.h5", "r") as f:
     print(list(f.keys()))
 
-    index=f["index"][:]
     sd=f["Spike_Data"][:]
+    print(sd.shape)
+    print(sd)
     
 #print(index.shape, index.dtype)
 #print(sd.shape, sd.dtype)

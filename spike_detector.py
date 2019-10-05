@@ -137,6 +137,7 @@ def crop_all_data(data, indices, time_window):
         start=i
         end=i+time_window
         output[j,:]=data_padded[start:end+1]
+        j+=1
     
     return output
 
@@ -153,6 +154,16 @@ def write_to_hdf5_one_time(input, filename):
         sd.attrs["Time_window"] = input.shape[1]
         sd.attrs["Data_Type"] = "int"
 
+    return 0
+
+def extract_data(data, interval, time_window, filename):
+    mean = np.mean(data)
+    std = np.std(data)
+    bound = interval*std
+    filters=np.abs(data-mean) > bound
+    selector=np.where(filters==True)[0]
+    extract=crop_all_data(data, selector, time_window)
+    write_to_hdf5_one_time(extract, filename)    
     return 0
 
 #t = time.time()
@@ -199,10 +210,11 @@ plt.plot(df.index, df, 'k')
 
 
 #t = time.time()
-bound = 7.0*std
-filters=np.abs(data-mean) > bound
-c=np.where(filters==True)[0]
-#print(c.shape, c)
+#bound = 7.0*std
+#filters=np.abs(data-mean) > bound
+#selector=np.where(filters==True)[0]
+#print(selector.shape)
+#print(selector)
 #elapsed_time=time.time()-t
 #print("elapsed time is", elapsed_time)
 
@@ -210,12 +222,13 @@ c=np.where(filters==True)[0]
 #two_sigma=find_by_deviration(data, 5.0)
 #t = time.time()
 #thr_sigma=find_by_deviration(data, 7.0)
-#print(thr_sigma.shape, thr_sigma)
+#print(thr_sigma.shape)
+#print(thr_sigma)
 #elapsed_time=time.time()-t
 #print("elapsed time is", elapsed_time)
 
 #t = time.time()
-#cc=crop_all_data(data, thr_sigma, 10)
+#cc=crop_all_data(data, selector, 10)
 #write_to_hdf5_one_time(cc, "output/test.h5")
 #elapsed_time=time.time()-t
 #print("elapsed time is", elapsed_time)
@@ -226,13 +239,17 @@ c=np.where(filters==True)[0]
 
 #print(len(one_sigma),len(two_sigma),len(thr_sigma))
 
+#print(cc[178,:])
 #print(crop_data(data, 0, 10))
 #print(crop_data(data, 1, 10))
 #print(data[:10])
-#print(crop_data(data, 35568715, 10))
-#print(crop_data(data, 35568716, 10))
+#print(crop_data(data, 35568718, 10))
+#print(crop_data(data, 35568719, 10))
 #print(data[-10:])
 
+extract_data(data, 7.0, 100, "output/7_sigma.h5")
+extract_data(data, 5.0, 100, "output/5_sigma.h5")
+extract_data(data, 3.0, 100, "output/3_sigma.h5")
 
 #        
 #with h5py.File("output/5_sigma.h5", "w") as f:

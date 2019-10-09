@@ -141,17 +141,17 @@ def crop_all_data(data, indices, time_window):
     
     return output
 
-def write_to_hdf5_one_time(input, filename):    
+def write_to_hdf5_one_time(input_index,input_data, filename):    
     with h5py.File(filename, 'w') as f:
-#        d = f.create_dataset("index", data=input)
-#        d.attrs["Spikes_Number"] = input.shape[0]
-#        d.attrs["Data_Type"] = "int"
-#        d.attrs["Index_Type"] = "center"
-#        #print(d.shape, d.dtype)
+        d = f.create_dataset("Spike_index", data=input_index)
+        d.attrs["Spikes_Number"] = input_index.shape[0]
+        d.attrs["Data_Type"] = "int"
+        d.attrs["Index_Type"] = "center"
+        #print(d.shape, d.dtype)
         
-        sd = f.create_dataset("Spike_Data", data=input)
-        sd.attrs["Spikes_Number"] = input.shape[0]
-        sd.attrs["Time_window"] = input.shape[1]
+        sd = f.create_dataset("Spike_Data", data=input_data)
+        sd.attrs["Spikes_Number"] = input_data.shape[0]
+        sd.attrs["Time_window"] = input_data.shape[1]
         sd.attrs["Data_Type"] = "int"
 
     return 0
@@ -163,7 +163,7 @@ def extract_data(data, interval, time_window, filename):
     filters=np.abs(data-mean) > bound
     selector=np.where(filters==True)[0]
     extract=crop_all_data(data, selector, time_window)
-    write_to_hdf5_one_time(extract, filename)    
+    write_to_hdf5_one_time(selector, extract, filename)    
     return 0
 
 #t = time.time()
